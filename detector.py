@@ -9,11 +9,14 @@ class Detector:
     def __init__(self, input_queue, output_queue):
         self.input_queue = input_queue
         self.output_queue = output_queue
-        # Initialize the background subtractor
-        self.bg_subtractor = cv2.createBackgroundSubtractorMOG2()
+        # Don't initialize OpenCV objects here as they can't be pickled
+        # for Windows multiprocessing
         
     def start(self):
         print("Detector: Starting motion detection")
+        
+        # Initialize the background subtractor here (after process has started)
+        bg_subtractor = cv2.createBackgroundSubtractorMOG2()
         
         while True:
             # Get a frame from the streamer
@@ -31,7 +34,7 @@ class Detector:
             frame_copy = frame.copy()
             
             # Apply background subtraction
-            fg_mask = self.bg_subtractor.apply(frame_copy)
+            fg_mask = bg_subtractor.apply(frame_copy)
             
             # Threshold the mask to remove shadows (value 127)
             _, thresh = cv2.threshold(fg_mask, 127, 255, cv2.THRESH_BINARY)

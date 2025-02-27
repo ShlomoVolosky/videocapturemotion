@@ -61,11 +61,8 @@ def main(video_path):
     print("All processes have completed. System shutdown successful.")
 
 if __name__ == "__main__":
-    # Set the multiprocessing start method
-    if sys.platform == 'win32':
-        multiprocessing.set_start_method('spawn')
-    else:
-        multiprocessing.set_start_method('fork')
+    # Set the multiprocessing start method explicitly (for Windows compatibility)
+    multiprocessing.set_start_method('spawn', force=True)
     
     # Parse command line arguments
     parser = argparse.ArgumentParser(description='Video Stream Analytics System')
