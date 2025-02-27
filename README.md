@@ -1,81 +1,111 @@
 # Video Stream Analytics System
 
-This project implements a video analytics system with motion detection and blurring capabilities. The system processes video streams, detects motion, and applies blurring to the detected regions while displaying the result.
+A Python-based pipeline system for video processing with motion detection and blurring capabilities. The system processes video streams from various sources, detects motion, and applies blurring to detected regions.
 
-## Architecture
+## Features
 
-The system follows a pipeline architecture with three main components:
+- Pipeline architecture with three independent components running as separate processes
+- Support for multiple video sources (local files, URLs, webcam)
+- Motion detection using frame differencing approach
+- Automatic blurring of detected motion regions
+- Real-time timestamp and motion status display
+- Multiple video format support (.mp4, .avi, .mov, .mkv, etc.)
+- Proper system shutdown when video ends
 
-1. **Streamer**: Reads frames from a video source and forwards them to the Detector
-2. **Detector**: Analyzes frames to identify motion and forwards frames with detection metadata to the Displayer
-3. **Displayer**: Displays frames with detection boxes, applies blurring to detected regions, and adds timestamps
+## Installation
 
-Each component runs as a separate process, communicating through queues.
-
-## Implementation Details
-
-### Communication Method
-
-The system uses `multiprocessing.Queue` for inter-process communication because:
-- It's specifically designed for sharing data between Python processes
-- It's thread-safe and process-safe
-- It can handle arbitrary Python objects (frames and detection data)
-- It's part of the standard library, making the solution portable
-- It provides built-in synchronization and buffering
-
-## Motion Detection Algorithm
-
-The system implements a frame differencing approach for motion detection:
-
-1. **Accumulative Frame Averaging**: Instead of using a single background frame, an accumulative weighted average of frames is maintained as the background model
-2. **Absolute Difference**: Computes the absolute difference between the current frame and the background model
-3. **Thresholding and Morphology**: Applies thresholding and dilation to identify regions of significant change
-4. **Contour Filtering**: Filters contours by size to eliminate noise and small movements
-
-This approach is more robust than simple background subtraction and works well for most real-world scenarios with varying lighting and minor camera movement.
-
-### Blurring Algorithm
-
-The system uses Gaussian blur (via `cv2.GaussianBlur`) to obfuscate detected regions. This provides an efficient way to blur movement areas while maintaining the overall frame integrity.
-
-### Shutdown Mechanism
-
-The system implements proper shutdown when a video ends through a signaling system:
-1. When the Streamer reaches the end of the video, it sends a `None` value to the Detector
-2. The Detector forwards this signal to the Displayer
-3. Each component terminates upon receiving this signal
-4. The main process waits for all components to finish using `join()`
-
-Additionally, signal handlers are set up to handle external termination requests (Ctrl+C).
-
-## Running the System
-
-To run the system, use the following command:
-
-### With a local video file (multiple formats supported):
-```bash
-python main.py --video path/to/video.mp4
-python main.py --video path/to/video.avi
-python main.py --video path/to/video.mov
-python main.py --video path/to/video.mpg
-```
-
-### With a video from a URL:
-```bash
-python main.py --video https://example.com/path/to/video.mp4
-```
-
-The system supports both local video files and HTTP/HTTPS URLs as video sources. OpenCV can handle numerous video formats including MP4, AVI, MOV, MPG, MPEG, MKV, WMV, and more.
-
-## Requirements
+### Requirements
 
 - Python 3.6+
-- OpenCV (`pip install opencv-python`)
+- OpenCV
+- NumPy
 
-## Step Implementation
+### Setup
 
-The code is organized to clearly separate the three implementation steps:
+1. Clone the repository:
+```bash
+git clone https://github.com/ShlomoVolosky/videocapturemotion.git
+cd video_capture
+```
 
-1. Building a system that performs analytics on video streams (all files)
-2. Adding a Blurring component (implemented in `displayer.py`)
-3. Shutting down the system when a video ends (implemented in all files with proper signal handling)
+2. Create a virtual environment (optional but recommended):
+```bash
+python -m venv venv
+```
+
+3. Activate the virtual environment:
+   - Windows:
+   ```bash
+   venv\Scripts\activate
+   ```
+   - Linux/Mac:
+   ```bash
+   source venv/bin/activate
+   ```
+
+4. Install the dependencies:
+```bash
+pip install -r requirements.txt
+```
+
+## How to Test the Code
+
+The system can process video from different sources. Here are the specific commands to test various video sources:
+
+### 1. Testing with a Local Video File
+
+```bash
+python main.py --video path/to/your/video.avi
+```
+
+### 2. Testing with Your Webcam
+
+To use your webcam as the video source, can run:
+
+```bash
+python -c "import cv2; cap = cv2.VideoCapture(0); fourcc = cv2.VideoWriter_fourcc(*'XVID'); out = cv2.VideoWriter('test_video.avi', fourcc, 20.0, (640, 480)); [out.write(frame) for ret, frame in [cap.read() for _ in range(200)] if ret]; cap.release(); out.release()"
+```
+
+```bash
+python main.py --video 0
+```
+
+Note: The `0` refers to the first webcam device. Use `1`, `2`, etc. for additional webcams if available.
+
+### 3. Testing with the Big Buck Bunny Sample Video URL
+
+```bash
+python main.py --video https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4
+```
+
+## System Architecture
+
+The system consists of three main components:
+
+1. **Streamer**: Reads frames from the video source and sends them to the Detector
+2. **Detector**: Analyzes frames to detect motion and forwards detection data to the Displayer
+3. **Displayer**: Applies blurring to detected regions and displays the processed video
+
+Each component runs as a separate process, communicating through multiprocessing queues.
+
+## Controls
+
+While the video is playing:
+- Press `q` to quit at any time
+- Close the video window to exit the application
+
+## Troubleshooting
+
+- **Video Not Found Error**: Ensure the file path is correct for local videos
+- **No Motion Detection**: Try adjusting lighting conditions or increasing movement in the frame
+- **Window Closes Immediately**: Ensure OpenCV is properly installed and can access your display
+- **Process Termination Issues**: If Ctrl+C doesn't terminate properly, close the video window instead
+
+## Example Output
+
+When running properly, you should see:
+- A window showing the video stream
+- Green rectangles highlighting areas with detected motion
+- Those same areas being blurred for privacy
+- A timestamp in the upper left corner
+- A status message showing "Motion Detected" or "No Motion"
