@@ -62,7 +62,7 @@ The system supports both local video files and HTTP/HTTPS URLs as video sources.
 
 ## Requirements
 
-- Python 3.6+
+- Python 3.9+
 - OpenCV (`pip install opencv-python`)
 
 ## Step Implementation
