@@ -70,7 +70,7 @@ if __name__ == "__main__":
     # Parse command line arguments
     parser = argparse.ArgumentParser(description='Video Stream Analytics System')
     parser.add_argument('--video', type=str, required=True, 
-                      help='Path to the video file to process')
+                      help='Path to the video file or URL to process. Supports local files (.mp4, .avi, .mov, .mkv, etc.) and http/https URLs')
     args = parser.parse_args()
     
     # Run the main function
